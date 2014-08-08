@@ -44,6 +44,27 @@ class Google2FA {
 		"4" => 28,	"5" => 29,
 		"6" => 30,	"7" => 31
 	);
+        
+        /**
+         * 
+         * Note: added 8/8/2014 from: https://github.com/hectorj/magenTOTP/blob/master/app/code/community/Hj/TOTP/Helper/TOTP.php
+         * 
+         * @param int $min
+         * @param int $max
+         * @return int
+         */
+        private static function crypto_rand_secure($min, $max) {
+            $range = $max - $min;
+            if ($range == 0) return $min; // not so random...
+            $log = log($range, 2);
+            $bytes = (int) ($log / 8) + 1; // length in bytes
+            $bits = (int) $log + 1; // length in bits
+            $filter = (int) (1 << $bits) - 1; // set all lower bits to 1
+            do {
+                $rnd = hexdec(bin2hex(openssl_random_pseudo_bytes($bytes, $s))) & $filter;
+            } while ($rnd >= $range);
+            return $min + $rnd;
+        }
 
 	/**
 	 * Generates a 16 digit secret key in base32 format
@@ -54,7 +75,7 @@ class Google2FA {
 		$s 	= "";
 
 		for ($i = 0; $i < $length; $i++)
-			$s .= $b32[rand(0,31)];
+			$s .= $b32[self::crypto_rand_secure(0, 31)];  // modified to use crypto_rand_secure
 
 		return $s;
 	}
